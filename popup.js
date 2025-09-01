@@ -23,10 +23,13 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const dirSelect = document.getElementById('dirSelect');
+  const dirList = document.getElementById('dirList');
+  const linkList = document.getElementById('linkList');
+  const currentDirLabel = document.getElementById('currentDirLabel');
   const newDirInput = document.getElementById('newDirInput');
   const addDirBtn = document.getElementById('addDirBtn');
   const exportBtn = document.getElementById('exportBtn');
+  const clearBtn = document.getElementById('clearBtn');
   const moreBtn = document.getElementById('moreBtn');
   const moreMenu = document.getElementById('moreMenu');
   const statusEl = document.getElementById('status');
@@ -85,20 +88,65 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function render({ dirs, selectedDir }) {
-    // populate select
-    dirSelect.innerHTML = '';
-    Object.keys(dirs)
-      .sort()
-      .forEach((name) => {
-        const opt = document.createElement('option');
-        opt.value = name;
-        opt.textContent = name;
-        dirSelect.appendChild(opt);
-      });
-    dirSelect.value = selectedDir;
+    // Render directories list
+    dirList.innerHTML = '';
+    const names = Object.keys(dirs).sort((a, b) => a.localeCompare(b));
+    names.forEach((name) => {
+      const li = document.createElement('li');
+      li.className = 'dir-item' + (name === selectedDir ? ' active' : '');
+      li.dataset.name = name;
 
+      const left = document.createElement('div');
+      left.className = 'dir-left';
+      const title = document.createElement('div');
+      title.className = 'dir-name';
+      title.textContent = name;
+      const count = document.createElement('div');
+      count.className = 'dir-count';
+      count.textContent = `(${(dirs[name] || []).length})`;
+      left.appendChild(title);
+      left.appendChild(count);
+
+      const actions = document.createElement('div');
+      actions.className = 'dir-actions';
+      // per-item export (newline)
+      const expBtn = document.createElement('button');
+      expBtn.className = 'icon-btn';
+      expBtn.title = 'Copy newline-separated';
+      expBtn.textContent = 'Copy';
+      expBtn.dataset.action = 'export';
+      // per-item delete
+      const delBtn = document.createElement('button');
+      delBtn.className = 'icon-btn';
+      delBtn.title = name === 'default' ? 'Default cannot be deleted' : 'Delete directory';
+      delBtn.textContent = 'Delete';
+      delBtn.dataset.action = 'delete';
+      if (name === 'default') delBtn.disabled = true;
+      actions.appendChild(expBtn);
+      actions.appendChild(delBtn);
+
+      li.appendChild(left);
+      li.appendChild(actions);
+      dirList.appendChild(li);
+    });
+
+    // Header and count
+    currentDirLabel.textContent = selectedDir;
     const links = dirs[selectedDir] || [];
     countBadge.textContent = links.length ? `(${links.length})` : '';
+
+    // Render links list for selected dir
+    linkList.innerHTML = '';
+    links.forEach((url) => {
+      const item = document.createElement('li');
+      item.className = 'link-item';
+      const a = document.createElement('a');
+      a.href = url;
+      a.textContent = url;
+      a.target = '_blank';
+      item.appendChild(a);
+      linkList.appendChild(item);
+    });
   }
 
   // Init
@@ -131,9 +179,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (e.key === 'Enter') addDirBtn.click();
   });
 
-  dirSelect?.addEventListener('change', async () => {
-    const selected = dirSelect.value;
-    await set({ selectedDir: selected });
+  // Directory list interactions (select, per-item export/delete)
+  dirList.addEventListener('click', async (e) => {
+    const item = e.target.closest('.dir-item');
+    if (!item) return;
+    const name = item.dataset.name;
+
+    // Action buttons
+    const actionBtn = e.target.closest('button.icon-btn');
+    if (actionBtn) {
+      const action = actionBtn.dataset.action;
+      state = await loadState();
+      if (action === 'export') {
+        const links = state.dirs[name] || [];
+        await copyText(formatLinks(links, 'newline'));
+        return;
+      }
+      if (action === 'delete') {
+        if (name === 'default') return; // safety
+        const ok = confirm(`Delete directory "${name}"? This cannot be undone.`);
+        if (!ok) return;
+        delete state.dirs[name];
+        // if deleting selected, fall back to default or first available
+        if (state.selectedDir === name) {
+          state.selectedDir = state.dirs['default'] ? 'default' : Object.keys(state.dirs)[0] || 'default';
+          if (!state.dirs[state.selectedDir]) state.dirs[state.selectedDir] = [];
+        }
+        await set({ dirs: state.dirs, selectedDir: state.selectedDir });
+        state = await loadState();
+        render(state);
+        return;
+      }
+      return;
+    }
+
+    // Selecting a directory (click on row)
+    await set({ selectedDir: name });
     state = await loadState();
     render(state);
   });
@@ -142,6 +223,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     state = await loadState();
     const links = state.dirs[state.selectedDir] || [];
     await copyText(formatLinks(links, 'newline'));
+  });
+
+  clearBtn?.addEventListener('click', async () => {
+    state = await loadState();
+    const name = state.selectedDir;
+    if (!name) return;
+    const ok = confirm(`Clear all links in "${name}"?`);
+    if (!ok) return;
+    state.dirs[name] = [];
+    await set({ dirs: state.dirs });
+    state = await loadState();
+    render(state);
+    setStatus('Cleared');
   });
 
   moreBtn?.addEventListener('click', (e) => {
