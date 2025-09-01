@@ -11,6 +11,18 @@
     "default_popup": "popup.html",
     "default_title": "Link Selector"
   },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "toggle-turbo": {
+      "suggested_key": {
+        "default": "Alt+Shift+Z",
+        "mac": "Alt+Shift+Z"
+      },
+      "description": "Toggle Turbo Mode"
+    }
+  },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],

@@ -95,27 +95,54 @@
     // Ignore clicks on our banner
     if (e.target && e.target.closest && e.target.closest(`#${BANNER_ID}`)) return;
 
-    const captureByTurbo = turboEnabled;
-    const captureByAlt = altCaptureEnabled && e.altKey;
-    if (!captureByTurbo && !captureByAlt) return;
-
     const a = e.target && e.target.closest && e.target.closest('a[href]');
     if (!a) return;
 
+    const isSelected = a.classList.contains('link-selector-selected');
+    const captureByTurbo = turboEnabled;
+    const captureByAlt = altCaptureEnabled && e.altKey;
+    const shouldHandle = isSelected || captureByTurbo || captureByAlt;
+    if (!shouldHandle) return;
+
+    // Block navigation immediately
     e.preventDefault();
     e.stopImmediatePropagation();
 
     ensureStyle();
-    a.classList.add('link-selector-selected');
-
     let { dirs, selectedDir } = await ensureInitialized();
     const href = a.href;
     const list = dirs[selectedDir] || (dirs[selectedDir] = []);
-    if (!list.includes(href)) list.push(href);
+    const idx = list.indexOf(href);
+    if (idx !== -1) {
+      // Remove
+      list.splice(idx, 1);
+      a.classList.remove('link-selector-selected');
+    } else {
+      // Add
+      list.push(href);
+      a.classList.add('link-selector-selected');
+    }
     await set({ dirs });
   }
 
-  document.addEventListener('click', onClick, true);
+  // Use window capture for earliest interception
+  function preBlock(e) {
+    if (e.target && e.target.closest && e.target.closest(`#${BANNER_ID}`)) return;
+    const a = e.target && e.target.closest && e.target.closest('a[href]');
+    if (!a) return;
+    const isSelected = a.classList.contains('link-selector-selected');
+    const captureByTurbo = turboEnabled;
+    const captureByAlt = altCaptureEnabled && e.altKey;
+    if (isSelected || captureByTurbo || captureByAlt) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }
+  }
+
+  window.addEventListener('pointerdown', preBlock, true);
+  window.addEventListener('mousedown', preBlock, true);
+  window.addEventListener('click', onClick, true);
+  window.addEventListener('auxclick', onClick, true);
 
   // Initialize settings and banner
   (async () => {
