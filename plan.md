@@ -8,9 +8,9 @@
 - __Persistence__: chrome.storage.local maintains all dirs and the selected dir.
 
 ## Current State (repo)
-- `manifest.json` — MV3, permissions: `activeTab`. No `storage` permission yet.
-- `content.js` — responds to `selectLinks` message by listing all `<a href>` on the page.
-- `popup.html` / `popup.js` — button “Select Links” sends message to content.
+- `manifest.json` — MV3 with permissions: `activeTab`, `storage`; action popup set to `popup.html`; content script `content.js` on `<all_urls>`.
+- `content.js` — includes Alt/Option-click capture that prevents navigation, adds purple border, and saves the link to the selected directory (deduped). Keeps the legacy `selectLinks` responder.
+- `popup.html` / `popup.js` — directory selector and creation UI; export button (newline) and kebab menu with JSON/CSV/newline; persists to `chrome.storage.local` and reacts to storage changes.
 
 ## High-Level Behavior
 - __In-page__: User holds Alt/Option and clicks a link. We stop the default open, add purple border, save URL into selected directory (deduped).
@@ -18,7 +18,8 @@
 - __Default directory__: If storage is empty, initialize `{ default: [] }` and set `selectedDir = 'default'`.
 
 ## Permissions
-Update `manifest.json` to include `storage` permission.
+Status: storage permission has been added to `manifest.json`.
+Update `manifest.json` to include `storage` permission (already applied):
 ```json
 {
   "manifest_version": 3,
@@ -54,6 +55,15 @@ Initialization rule: if either `dirs` or `selectedDir` missing, set to the defau
 - __Create directory__: In popup, user types a name → click Add → create empty array if not existing → set `selectedDir` to new dir → persist.
 - __Switch directory__: Select from dropdown → update `selectedDir` in storage.
 - __Export__: Click export icon to copy newline-separated. Kebab menu opens more choices: JSON array and comma-separated.
+
+## Implementation Status
+- [x] Add `storage` permission to `manifest.json`.
+- [x] Initialize storage schema (`dirs`, `selectedDir`) with default directory.
+- [x] Content script: Alt/Option-click handler (prevent open, purple border, save link, dedupe).
+- [x] Popup UI: directory selector and creation controls.
+- [x] Popup exports: newline, comma-separated, JSON array; clipboard copy with feedback.
+- [x] React to `chrome.storage` changes to refresh popup state.
+- [ ] QA pass across multiple sites; finalize polish.
 
 ## Implementation Steps
 1) __Manifest__ (`manifest.json`)
@@ -181,11 +191,11 @@ function formatLinks(links, mode) {
 - __Storage change propagation__: Alt-click adds link; open popup and see counts/exports updated (either immediately or on open).
 
 ## Milestones
-- M1: Manifest + storage schema + initialization in popup.
-- M2: Content script alt-click handler + purple border + save.
-- M3: Popup UI: dir select + new dir.
-- M4: Export button + kebab options.
-- M5: QA + minor polish.
+- M1: Manifest + storage schema + initialization in popup. [Done]
+- M2: Content script alt-click handler + purple border + save. [Done]
+- M3: Popup UI: dir select + new dir. [Done]
+- M4: Export button + kebab options. [Done]
+- M5: QA + minor polish. [Pending]
 
 ## Future Enhancements (post-MVP)
 - Rename/delete directories; delete individual links.
