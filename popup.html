@@ -4,23 +4,86 @@
   <title>Link Selector</title>
   <style>
     body {
-      width: 300px;
+      width: 320px;
       padding: 10px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
     }
-    #linkList {
-      list-style-type: none;
-      padding: 0;
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 8px 0;
     }
-    #linkList li {
-      margin: 5px 0;
-      word-break: break-all;
+    #dirSelect {
+      flex: 1;
+      max-width: 100%;
+    }
+    #newDirInput {
+      flex: 1;
+    }
+    #exportBtn, #moreBtn {
+      cursor: pointer;
+    }
+    #moreMenu {
+      position: absolute;
+      right: 10px;
+      margin-top: 4px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+      padding: 6px 0;
+      display: none;
+      z-index: 1000;
+      min-width: 180px;
+    }
+    #moreMenu.open {
+      display: block;
+    }
+    #moreMenu button {
+      display: block;
+      width: 100%;
+      padding: 8px 12px;
+      background: none;
+      border: none;
+      text-align: left;
+      cursor: pointer;
+    }
+    #moreMenu button:hover {
+      background: #f3f4f6;
+    }
+    #status {
+      font-size: 12px;
+      color: #666;
+      height: 16px;
     }
   </style>
 </head>
 <body>
   <h1>Link Selector</h1>
-  <button id="selectLinks">Select Links</button>
-  <ul id="linkList"></ul>
+<div class="row">
+  <label for="dirSelect">Directory:</label>
+  <select id="dirSelect"></select>
+  <span id="countBadge" title="Link count"></span>
+</div>
+
+<div class="row">
+  <input id="newDirInput" type="text" placeholder="New directory name" />
+  <button id="addDirBtn">Add</button>
+</div>
+
+<div class="row" style="justify-content: flex-end; position: relative;">
+  <button id="exportBtn" title="Copy links (newline)">Copy</button>
+  <button id="moreBtn" title="More export options">⋮</button>
+  <div id="moreMenu">
+    <button data-mode="newline">Copy newline-separated</button>
+    <button data-mode="comma">Copy comma-separated</button>
+    <button data-mode="json">Copy JSON array</button>
+  </div>
+</div>
+
+<div id="status"></div>
+
   <script src="popup.js"></script>
 </body>
 </html>
