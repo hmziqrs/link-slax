@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const moreMenu = document.getElementById('moreMenu');
   const statusEl = document.getElementById('status');
   const countBadge = document.getElementById('countBadge');
+  const themeToggle = document.getElementById('themeToggle');
 
   const get = (keys) =>
     new Promise((resolve) => chrome.storage.local.get(keys, resolve));
@@ -48,6 +49,62 @@ document.addEventListener('DOMContentLoaded', async () => {
       }, 1500);
     }
   };
+
+  // Inline SVG icons (Lucide)
+  const ICONS = {
+    copy: `
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+        <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+      </svg>
+    `,
+    trash: `
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 11v6" />
+        <path d="M14 11v6" />
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+        <path d="M3 6h18" />
+        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      </svg>
+    `,
+    x: `
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 6 6 18" />
+        <path d="m6 6 12 12" />
+      </svg>
+    `,
+    sun: `
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2" />
+        <path d="M12 20v2" />
+        <path d="m4.93 4.93 1.41 1.41" />
+        <path d="m17.66 17.66 1.41 1.41" />
+        <path d="M2 12h2" />
+        <path d="M20 12h2" />
+        <path d="m6.34 17.66-1.41 1.41" />
+        <path d="m19.07 4.93-1.41 1.41" />
+      </svg>
+    `,
+    moon: `
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" />
+      </svg>
+    `,
+  };
+
+  function setTheme(mode, persist = true) {
+    document.body.classList.toggle('dark', mode === 'dark');
+    if (themeToggle) themeToggle.innerHTML = mode === 'dark' ? ICONS.sun : ICONS.moon;
+    if (persist) set({ theme: mode });
+  }
+
+  async function applySavedTheme() {
+    const { theme } = await get(['theme']);
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const mode = theme || (prefersDark ? 'dark' : 'light');
+    setTheme(mode, false);
+  }
 
   async function ensureInitialized() {
     const { dirs, selectedDir } = await get(['dirs', 'selectedDir']);
@@ -113,13 +170,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       const expBtn = document.createElement('button');
       expBtn.className = 'icon-btn';
       expBtn.title = 'Copy newline-separated';
-      expBtn.textContent = 'Copy';
+      expBtn.innerHTML = ICONS.copy;
       expBtn.dataset.action = 'export';
       // per-item delete
       const delBtn = document.createElement('button');
       delBtn.className = 'icon-btn';
       delBtn.title = name === 'default' ? 'Default cannot be deleted' : 'Delete directory';
-      delBtn.textContent = 'Delete';
+      delBtn.innerHTML = ICONS.trash;
       delBtn.dataset.action = 'delete';
       if (name === 'default') delBtn.disabled = true;
       actions.appendChild(expBtn);
@@ -140,10 +197,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     links.forEach((url) => {
       const item = document.createElement('li');
       item.className = 'link-item';
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'icon-btn link-remove';
+      removeBtn.title = 'Remove link';
+      removeBtn.innerHTML = ICONS.x;
+      removeBtn.dataset.url = url;
       const a = document.createElement('a');
       a.href = url;
       a.textContent = url;
       a.target = '_blank';
+      item.appendChild(removeBtn);
       item.appendChild(a);
       linkList.appendChild(item);
     });
@@ -151,6 +214,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Init
   await ensureInitialized();
+  await applySavedTheme();
   let state = await loadState();
   render(state);
 
@@ -177,6 +241,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   newDirInput?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') addDirBtn.click();
+  });
+
+  themeToggle?.addEventListener('click', async () => {
+    const isDark = document.body.classList.contains('dark');
+    const next = isDark ? 'light' : 'dark';
+    setTheme(next, true);
   });
 
   // Directory list interactions (select, per-item export/delete)
@@ -238,6 +308,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     setStatus('Cleared');
   });
 
+  // Per-link remove
+  linkList.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.link-remove');
+    if (!btn) return;
+    state = await loadState();
+    const name = state.selectedDir;
+    const url = btn.dataset.url;
+    const list = state.dirs[name] || [];
+    const idx = list.indexOf(url);
+    if (idx > -1) list.splice(idx, 1);
+    await set({ dirs: state.dirs });
+    state = await loadState();
+    render(state);
+    setStatus('Removed');
+  });
+
   moreBtn?.addEventListener('click', (e) => {
     e.stopPropagation();
     moreMenu.classList.toggle('open');
@@ -264,6 +350,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (changes.dirs || changes.selectedDir) {
       state = await loadState();
       render(state);
+    }
+    if (changes.theme) {
+      setTheme(changes.theme.newValue, false);
     }
   });
 

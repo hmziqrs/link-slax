@@ -3,37 +3,81 @@
 <head>
   <title>Link Selector</title>
   <style>
+    :root {
+      --bg: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --surface: #f9fafb;
+      --surface-2: #f3f4f6;
+      --accent: #8b5cf6;
+    }
+    body.dark {
+      --bg: #0b1220;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #334155;
+      --surface: #111827;
+      --surface-2: #1f2937;
+      --accent: #8b5cf6;
+    }
     body {
       width: 320px;
       padding: 10px;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
     }
+    .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    h1 { font-size: 16px; margin: 0; }
     .row { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
-    #status { font-size: 12px; color: #666; height: 16px; }
-    .section-title { font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: .04em; margin: 8px 0 4px; }
+    #status { font-size: 12px; color: var(--muted); height: 16px; }
+    .section-title { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin: 8px 0 4px; }
     .dir-input { display: flex; gap: 6px; }
-    #newDirInput { flex: 1; }
+    #newDirInput { flex: 1; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; }
     .dir-list { list-style: none; padding: 0; margin: 6px 0 0; }
-    .dir-item { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 6px; cursor: pointer; }
-    .dir-item.active { border-color: #8b5cf6; background: #f5f3ff; }
+    .dir-item { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 6px; cursor: pointer; background: var(--surface); }
+    .dir-item.active { border-color: var(--accent); background: rgba(139, 92, 246, 0.12); }
     .dir-left { display: flex; align-items: center; gap: 8px; overflow: hidden; }
     .dir-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .dir-count { font-size: 12px; color: #6b7280; }
+    .dir-count { font-size: 12px; color: var(--muted); }
     .dir-actions { display: flex; align-items: center; gap: 6px; }
-    .icon-btn { border: 1px solid #e5e7eb; background: white; border-radius: 6px; padding: 2px 6px; cursor: pointer; }
+    .icon-btn { border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 6px; padding: 4px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+    .icon-btn:hover { background: var(--surface-2); }
     .icon-btn[disabled] { opacity: .5; cursor: not-allowed; }
-    .links-container { border-top: 1px solid #e5e7eb; padding-top: 8px; margin-top: 8px; }
+    .icon-btn svg { width: 16px; height: 16px; }
+    .links-container { border-top: 1px solid var(--border); padding-top: 8px; margin-top: 8px; }
     .link-list { list-style: none; padding: 0; margin: 6px 0 0; max-height: 220px; overflow: auto; }
-    .link-item { font-size: 12px; line-height: 1.3; padding: 4px 0; word-break: break-all; border-bottom: 1px dashed #eee; }
+    .link-item { display: flex; align-items: center; gap: 8px; font-size: 12px; line-height: 1.3; padding: 4px 0; word-break: break-all; border-bottom: 1px dashed var(--border); }
+    .link-item a { color: var(--text); text-decoration: none; }
+    .link-item a:hover { text-decoration: underline; }
     .toolbar { display: flex; justify-content: flex-end; gap: 6px; position: relative; }
-    #moreMenu { position: absolute; right: 0; top: 32px; background: white; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); padding: 6px 0; display: none; z-index: 1000; min-width: 180px; }
+    #moreMenu { position: absolute; right: 0; top: 32px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); padding: 6px 0; display: none; z-index: 1000; min-width: 180px; }
     #moreMenu.open { display: block; }
-    #moreMenu button { display: block; width: 100%; padding: 8px 12px; background: none; border: none; text-align: left; cursor: pointer; }
-    #moreMenu button:hover { background: #f3f4f6; }
+    #moreMenu button { display: block; width: 100%; padding: 8px 12px; background: none; border: none; text-align: left; cursor: pointer; color: var(--text); }
+    #moreMenu button:hover { background: var(--surface-2); }
   </style>
 </head>
 <body>
-  <h1>Link Selector</h1>
+  <div class="topbar">
+    <h1>Link Selector</h1>
+    <button id="themeToggle" class="icon-btn" title="Toggle theme" aria-label="Toggle theme">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24" height="24" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2" />
+        <path d="M12 20v2" />
+        <path d="m4.93 4.93 1.41 1.41" />
+        <path d="m17.66 17.66 1.41 1.41" />
+        <path d="M2 12h2" />
+        <path d="M20 12h2" />
+        <path d="m6.34 17.66-1.41 1.41" />
+        <path d="m19.07 4.93-1.41 1.41" />
+      </svg>
+    </button>
+  </div>
   <div>
     <div class="section-title">Directories</div>
     <div class="dir-input">
@@ -47,9 +91,29 @@
     <div class="row" style="justify-content: space-between; align-items: center;">
       <div><strong id="currentDirLabel">default</strong> <span id="countBadge"></span></div>
       <div class="toolbar">
-        <button id="exportBtn" class="icon-btn" title="Copy links (newline)">Copy</button>
-        <button id="clearBtn" class="icon-btn" title="Clear links">Clear</button>
-        <button id="moreBtn" class="icon-btn" title="More export options">⋮</button>
+        <button id="exportBtn" class="icon-btn" title="Copy links (newline)" aria-label="Copy links">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+            <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+          </svg>
+        </button>
+        <button id="clearBtn" class="icon-btn" title="Clear links" aria-label="Clear links">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 11v6" />
+            <path d="M14 11v6" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+            <path d="M3 6h18" />
+            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          </svg>
+        </button>
+        <button id="moreBtn" class="icon-btn" title="More export options" aria-label="More options">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="1" />
+            <circle cx="12" cy="5" r="1" />
+            <circle cx="12" cy="19" r="1" />
+          </svg>
+        </button>
+      
         <div id="moreMenu">
           <button data-mode="newline">Copy newline-separated</button>
           <button data-mode="comma">Copy comma-separated</button>
