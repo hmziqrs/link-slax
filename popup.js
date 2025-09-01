@@ -35,6 +35,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const statusEl = document.getElementById('status');
   const countBadge = document.getElementById('countBadge');
   const themeToggle = document.getElementById('themeToggle');
+  const turboToggle = document.getElementById('turboToggle');
+  const altToggle = document.getElementById('altToggle');
 
   const get = (keys) =>
     new Promise((resolve) => chrome.storage.local.get(keys, resolve));
@@ -91,6 +93,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         <path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" />
       </svg>
     `,
+    keyboard: `
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 8h.01" />
+        <path d="M12 12h.01" />
+        <path d="M14 8h.01" />
+        <path d="M16 12h.01" />
+        <path d="M18 8h.01" />
+        <path d="M6 8h.01" />
+        <path d="M7 16h10" />
+        <path d="M8 12h.01" />
+        <rect width="20" height="16" x="2" y="4" rx="2" />
+      </svg>
+    `,
+    zap: `
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" />
+      </svg>
+    `,
   };
 
   function setTheme(mode, persist = true) {
@@ -104,6 +124,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     const mode = theme || (prefersDark ? 'dark' : 'light');
     setTheme(mode, false);
+  }
+
+  function updateCaptureToggles(turboOn, altOn) {
+    if (turboToggle) {
+      turboToggle.classList.toggle('toggle-on', !!turboOn);
+      turboToggle.setAttribute('aria-pressed', (!!turboOn).toString());
+      turboToggle.title = `Turbo ${turboOn ? 'On' : 'Off'}`;
+    }
+    if (altToggle) {
+      altToggle.classList.toggle('toggle-on', !!altOn);
+      altToggle.setAttribute('aria-pressed', (!!altOn).toString());
+      altToggle.title = `Alt-capture ${altOn ? 'On' : 'Off'}`;
+    }
+  }
+
+  async function applyCaptureTogglesFromStorage() {
+    const { turbo, altCapture } = await get(['turbo', 'altCapture']);
+    const turboOn = !!turbo; // default false
+    const altOn = altCapture !== false; // default true
+    updateCaptureToggles(turboOn, altOn);
   }
 
   async function ensureInitialized() {
@@ -223,6 +263,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Init
   await ensureInitialized();
   await applySavedTheme();
+  await applyCaptureTogglesFromStorage();
   let state = await loadState();
   
   // Clean up any duplicates on load
@@ -263,6 +304,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     const isDark = document.body.classList.contains('dark');
     const next = isDark ? 'light' : 'dark';
     setTheme(next, true);
+  });
+
+  altToggle?.addEventListener('click', async () => {
+    const { turbo, altCapture } = await get(['turbo', 'altCapture']);
+    const nextAlt = !(altCapture !== false);
+    await set({ altCapture: nextAlt });
+    updateCaptureToggles(!!turbo, nextAlt);
+    setStatus(`Alt-capture: ${nextAlt ? 'On' : 'Off'}`);
+  });
+
+  turboToggle?.addEventListener('click', async () => {
+    const { turbo, altCapture } = await get(['turbo', 'altCapture']);
+    const nextTurbo = !turbo;
+    await set({ turbo: nextTurbo });
+    updateCaptureToggles(nextTurbo, altCapture !== false);
+    setStatus(`Turbo: ${nextTurbo ? 'On' : 'Off'}`);
   });
 
   // Directory list interactions (select, per-item export/delete)
@@ -372,6 +429,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         state.dirs = cleanedDirs;
       }
       render(state);
+    }
+    if (changes.turbo || changes.altCapture) {
+      const { turbo, altCapture } = await get(['turbo', 'altCapture']);
+      updateCaptureToggles(!!turbo, altCapture !== false);
     }
     if (changes.theme) {
       setTheme(changes.theme.newValue, false);

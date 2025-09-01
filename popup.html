@@ -29,6 +29,7 @@
       color: var(--text);
     }
     .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .top-actions { display: flex; align-items: center; gap: 6px; }
     h1 { font-size: 16px; margin: 0; }
     .row { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
     #status { font-size: 12px; color: var(--muted); height: 16px; }
@@ -46,6 +47,7 @@
     .icon-btn:hover { background: var(--surface-2); }
     .icon-btn[disabled] { opacity: .5; cursor: not-allowed; }
     .icon-btn svg { width: 16px; height: 16px; }
+    .icon-btn.toggle-on { border-color: var(--accent); background: rgba(139, 92, 246, 0.12); }
     .links-container { border-top: 1px solid var(--border); padding-top: 8px; margin-top: 8px; }
     .link-list { list-style: none; padding: 0; margin: 6px 0 0; max-height: 220px; overflow: auto; }
     .link-item { display: flex; align-items: center; gap: 8px; font-size: 12px; line-height: 1.3; padding: 4px 0; word-break: break-all; border-bottom: 1px dashed var(--border); }
@@ -61,22 +63,48 @@
 <body>
   <div class="topbar">
     <h1>Link Selector</h1>
-    <button id="themeToggle" class="icon-btn" title="Toggle theme" aria-label="Toggle theme">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24" height="24" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="4" />
-        <path d="M12 2v2" />
-        <path d="M12 20v2" />
-        <path d="m4.93 4.93 1.41 1.41" />
-        <path d="m17.66 17.66 1.41 1.41" />
-        <path d="M2 12h2" />
-        <path d="M20 12h2" />
-        <path d="m6.34 17.66-1.41 1.41" />
-        <path d="m19.07 4.93-1.41 1.41" />
-      </svg>
-    </button>
+    <div class="top-actions">
+      <button id="altToggle" class="icon-btn" title="Toggle Alt-capture" aria-label="Toggle Alt-capture">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 8h.01" />
+          <path d="M12 12h.01" />
+          <path d="M14 8h.01" />
+          <path d="M16 12h.01" />
+          <path d="M18 8h.01" />
+          <path d="M6 8h.01" />
+          <path d="M7 16h10" />
+          <path d="M8 12h.01" />
+          <rect width="20" height="16" x="2" y="4" rx="2" />
+        </svg>
+      </button>
+      <button id="turboToggle" class="icon-btn" title="Toggle Turbo mode" aria-label="Toggle Turbo mode">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" />
+        </svg>
+      </button>
+      <button id="themeToggle" class="icon-btn" title="Toggle theme" aria-label="Toggle theme">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2" />
+          <path d="M12 20v2" />
+          <path d="m4.93 4.93 1.41 1.41" />
+          <path d="m17.66 17.66 1.41 1.41" />
+          <path d="M2 12h2" />
+          <path d="M20 12h2" />
+          <path d="m6.34 17.66-1.41 1.41" />
+          <path d="m19.07 4.93-1.41 1.41" />
+        </svg>
+      </button>
+    </div>
   </div>
   <div>
     <div class="section-title">Directories</div>
