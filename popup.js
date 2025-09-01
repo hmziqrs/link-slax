@@ -123,6 +123,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
   }
 
+  function deduplicateLinks(dirs) {
+    const cleaned = {};
+    for (const [name, links] of Object.entries(dirs)) {
+      cleaned[name] = [...new Set(links)]; // Remove duplicates using Set
+    }
+    return cleaned;
+  }
+
   function formatLinks(links, mode) {
     switch (mode) {
       case 'json':
@@ -216,6 +224,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   await ensureInitialized();
   await applySavedTheme();
   let state = await loadState();
+  
+  // Clean up any duplicates on load
+  const cleanedDirs = deduplicateLinks(state.dirs);
+  if (JSON.stringify(cleanedDirs) !== JSON.stringify(state.dirs)) {
+    await set({ dirs: cleanedDirs });
+    state.dirs = cleanedDirs;
+  }
+  
   render(state);
 
   // Events
@@ -349,6 +365,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (area !== 'local') return;
     if (changes.dirs || changes.selectedDir) {
       state = await loadState();
+      // Deduplicate on storage changes too
+      const cleanedDirs = deduplicateLinks(state.dirs);
+      if (JSON.stringify(cleanedDirs) !== JSON.stringify(state.dirs)) {
+        await set({ dirs: cleanedDirs });
+        state.dirs = cleanedDirs;
+      }
       render(state);
     }
     if (changes.theme) {
